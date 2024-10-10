@@ -1,0 +1,53 @@
+// script.js
+document.getElementById("verifyButton").onclick = async () => {
+  const url = document.getElementById("urlInput").value;
+  const messageEl = document.getElementById("message");
+  const permalinkEl = document.getElementById("permalink");
+  const resultsEl = document.getElementById("results");
+  const deploymentStatusEl = document.getElementById("deploymentStatus");
+
+  messageEl.textContent = "Verificando...";
+  resultsEl.innerHTML = "";
+  permalinkEl.innerHTML = "";
+  deploymentStatusEl.innerHTML = "";
+
+  try {
+    const response = await fetch(
+      `/api/verificar?url=${encodeURIComponent(url)}`
+    );
+    console.log("Resposta recebida do servidor:", response); // Log da resposta
+
+    if (!response.ok) {
+      throw new Error("Erro na resposta: " + response.statusText);
+    }
+
+    const data = await response.json();
+    console.log("Dados recebidos:", data); // Log dos dados recebidos
+
+    messageEl.textContent = "";
+    if (data.permalink) {
+      permalinkEl.innerHTML = `<strong>Permalink encontrado:</strong> <a href="${data.permalink}" target="_blank" rel="noopener noreferrer">${data.permalink}</a>`;
+    }
+
+    if (data.requisitions.length > 0) {
+      resultsEl.innerHTML = "<h2>Requisições capturadas:</h2>";
+      data.requisitions.forEach((req) => {
+        resultsEl.innerHTML += `<div><strong>URL:</strong> ${req.url} <br><strong>Método:</strong> ${req.method}</div>`;
+      });
+    } else {
+      resultsEl.innerHTML = "<p>Nenhuma requisição Sizebay encontrada.</p>";
+    }
+
+    deploymentStatusEl.innerHTML = `
+            <h3>Status de Implantação:</h3>
+            <ul>
+                <li>Script: ${data.scriptStatus ? "✅" : "❌"}</li>
+                <li>GTM: ${data.gtmStatus ? "✅" : "❌"}</li>
+                <li>VTEX IO: ${data.vtexIOStatus ? "✅" : "❌"}</li>
+            </ul>
+        `;
+  } catch (error) {
+    messageEl.textContent = error.message || "Ocorreu um erro.";
+    console.error("Erro:", error);
+  }
+};

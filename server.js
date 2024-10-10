@@ -1,62 +1,56 @@
 const express = require("express");
 const puppeteer = require("puppeteer");
-const path = require("path"); // Importar o módulo path para lidar com caminhos
+const helmet = require("helmet");
+const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = 3000;
 
-// Middleware para servir arquivos estáticos da pasta 'public'
-app.use(express.static("public"));
+// Middleware para servir arquivos estáticos
+app.use(express.static(path.join(__dirname))); // Adicione isso
 
-// Rota para servir o HTML
+app.use(helmet());
+
+// Rota para a raiz
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // Rota para verificar URL
-app.get("/api/verify", async (req, res) => {
-  const { url } = req.query;
-
+app.get("/api/verificar", async (req, res) => {
+  const url = req.query.url;
   if (!url) {
-    return res.status(400).json({ message: "URL não fornecida." });
+    return res.status(400).json({ error: "URL não fornecida." });
   }
 
-  let browser;
-  const requisitions = [];
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto(url, { waitUntil: "networkidle2" });
 
-  try {
-    console.log("Iniciando Puppeteer...");
-    browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
-    console.log(`Acessando a URL: ${url}`);
-
-    await page.goto(url, { waitUntil: "domcontentloaded" });
-
-    page.on("request", (request) => {
-      const requestUrl = request.url();
-      if (requestUrl.includes("sizebay")) {
-        requisitions.push({
-          url: requestUrl,
-          method: request.method(),
-        });
-      }
+  const data = await page.evaluate(() => {
+    const requisitions = [];
+    window.performance.getEntriesByType("resource").forEach((entry) => {
+      requisitions.push({ url: entry.name, method: entry.initiatorType });
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 10000));
+    const scriptStatus =
+      document.querySelector('script[src*="sizebay"]') !== null;
+    const gtmStatus = !!window.dataLayer;
+    const vtexIOStatus = !!window.vtex && !!window.vtex.sizing;
 
-    res.status(200).json({ requisitions });
-  } catch (error) {
-    console.error("Erro ao verificar URL:", error);
-    res.status(500).json({ message: `Erro: ${error.message}` });
-  } finally {
-    if (browser) {
-      await browser.close();
-      console.log("Navegador Puppeteer fechado.");
-    }
-  }
+    return {
+      requisitions,
+      scriptStatus,
+      gtmStatus,
+      vtexIOStatus,
+    };
+  });
+
+  await browser.close();
+  res.json(data);
 });
 
-// Iniciar o servidor
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+// Inicia o servidor
+app.listen(port, () => {
+  console.log(`Servidor rodando em http://localhost:${port}`);
 });
