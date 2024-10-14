@@ -7,10 +7,15 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: "URL não fornecida." });
   }
 
+  console.log("Iniciando verificação para a URL:", url);
+
   try {
     const browser = await puppeteer.launch({
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
+
+    console.log("Navegador Puppeteer iniciado");
+
     const page = await browser.newPage();
     const requisitions = [];
     const deploymentStatus = {
@@ -43,6 +48,7 @@ module.exports = async (req, res) => {
       request.continue();
     });
 
+    console.log("Indo para a URL", url);
     await page.goto(url, { waitUntil: "networkidle2" });
 
     // Capturar permalink se disponível
@@ -51,6 +57,8 @@ module.exports = async (req, res) => {
         ? window.SizebayPrescript().getPermalink()
         : null;
     });
+
+    console.log("Permalink encontrado:", permalink);
 
     if (permalink && !deploymentStatus.gtm && !deploymentStatus.vtexIO) {
       deploymentStatus.script = true;
@@ -66,7 +74,7 @@ module.exports = async (req, res) => {
       permalink,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Erro ao processar a URL:", error);
     res.status(500).json({ error: "Erro ao processar a URL." });
   }
 };

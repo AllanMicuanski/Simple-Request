@@ -38,15 +38,6 @@ document.getElementById("verifyButton").onclick = async () => {
       req.url.includes("sizebay")
     );
 
-    if (filteredRequests.length > 0) {
-      resultsEl.innerHTML = "<h2>Requisições Sizebay capturadas:</h2>";
-      filteredRequests.forEach((req) => {
-        resultsEl.innerHTML += `<div><strong>URL:</strong> ${req.url} <br><strong>Método:</strong> ${req.method}</div>`;
-      });
-    } else {
-      resultsEl.innerHTML = "<p>Nenhuma requisição Sizebay encontrada.</p>";
-    }
-
     // Exibir status de implantação (Script, GTM, VTEX IO)
     deploymentStatusEl.innerHTML = `
       <h3>Status de Implantação:</h3>
