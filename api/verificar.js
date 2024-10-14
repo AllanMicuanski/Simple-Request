@@ -33,16 +33,15 @@ module.exports = async (req, res) => {
         requisitions.push({
           url: requestUrl,
           method: request.method(),
+          initiator: request.initiator(), // Captura a informação do iniciador
         });
 
         // Verificação de VTEX IO
-        if (requestUrl.includes("vtex_module.js")) {
+        if (
+          requestUrl.includes("vtex_module.js") ||
+          requestUrl.includes("vtexassets")
+        ) {
           deploymentStatus.vtexIO = true;
-        }
-
-        // Verificação de GTM via prescript.js
-        if (requestUrl.includes("prescript.js")) {
-          deploymentStatus.gtm = true;
         }
       }
       request.continue();
@@ -58,9 +57,25 @@ module.exports = async (req, res) => {
         : null;
     });
 
+    // Verificação do GTM através da URL do initiator
+    const gtmInitiator = requisitions.some((req) => {
+      // Verifica se o iniciador existe
+      if (req.initiator && req.initiator.callFrames) {
+        // Itera sobre os callFrames para encontrar a URL
+        return req.initiator.callFrames.some(
+          (frame) => frame.url && frame.url.includes("gtm")
+        );
+      }
+      return false;
+    });
+
+    if (gtmInitiator) {
+      deploymentStatus.gtm = true;
+    }
+
     console.log("Permalink encontrado:", permalink);
 
-    if (permalink && !deploymentStatus.gtm && !deploymentStatus.vtexIO) {
+    if (permalink) {
       deploymentStatus.script = true;
     }
 
