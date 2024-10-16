@@ -26,29 +26,41 @@ module.exports = async (req, res) => {
 
     await page.setRequestInterception(true);
     page.on("request", (request) => {
-      const requestUrl = request.url();
+      // Cancela o carregamento de imagens, CSS e fontes para acelerar
+      if (["image", "stylesheet", "font"].includes(request.resourceType())) {
+        request.abort();
+      } else {
+        const requestUrl = request.url();
 
-      // Captura requisições que contenham "sizebay"
-      if (requestUrl.includes("sizebay")) {
-        requisitions.push({
-          url: requestUrl,
-          method: request.method(),
-          initiator: request.initiator(), // Captura a informação do iniciador
-        });
+        // Captura requisições que contenham "sizebay"
+        if (requestUrl.includes("sizebay")) {
+          requisitions.push({
+            url: requestUrl,
+            initiator: request.initiator(),
+          });
 
-        // Verificação de VTEX IO
-        if (
-          requestUrl.includes("vtex_module.js") ||
-          requestUrl.includes("vtexassets")
-        ) {
-          deploymentStatus.vtexIO = true;
+          // Verificação de VTEX IO
+          if (
+            requestUrl.includes("vtex_module.js") ||
+            requestUrl.includes("vtexassets")
+          ) {
+            deploymentStatus.vtexIO = true;
+          }
+          // Verificação de GTM
+          if (requisitions[0].initiator.type === "script") {
+            deploymentStatus.gtm = true;
+          }
+          // Verificação de Script
+          if (requisitions[0].initiator.type === "parser") {
+            deploymentStatus.script = true;
+          }
         }
+        request.continue();
       }
-      request.continue();
     });
 
     console.log("Indo para a URL", url);
-    await page.goto(url, { waitUntil: "networkidle2" });
+    await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
 
     // Capturar permalink se disponível
     const permalink = await page.evaluate(() => {
@@ -57,27 +69,7 @@ module.exports = async (req, res) => {
         : null;
     });
 
-    // Verificação do GTM através da URL do initiator
-    const gtmInitiator = requisitions.some((req) => {
-      // Verifica se o iniciador existe
-      if (req.initiator && req.initiator.callFrames) {
-        // Itera sobre os callFrames para encontrar a URL
-        return req.initiator.callFrames.some(
-          (frame) => frame.url && frame.url.includes("gtm")
-        );
-      }
-      return false;
-    });
-
-    if (gtmInitiator) {
-      deploymentStatus.gtm = true;
-    }
-
     console.log("Permalink encontrado:", permalink);
-
-    if (permalink) {
-      deploymentStatus.script = true;
-    }
 
     await browser.close();
 
