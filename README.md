@@ -43,3 +43,6 @@ A resposta conterá informações sobre as requisições feitas, o estado dos sc
 
 Licença
 Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
+
+
+Observação: No momento, a aplicação ainda não está disponível online devido à necessidade do node, que requer um servidor para funcionar corretamente.
