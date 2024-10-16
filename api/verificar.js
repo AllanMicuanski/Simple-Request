@@ -26,31 +26,28 @@ module.exports = async (req, res) => {
 
     await page.setRequestInterception(true);
     page.on("request", (request) => {
-      // Cancela o carregamento de imagens, CSS e fontes para acelerar
       if (["image", "stylesheet", "font"].includes(request.resourceType())) {
         request.abort();
       } else {
         const requestUrl = request.url();
 
-        // Captura requisições que contenham "sizebay"
         if (requestUrl.includes("sizebay")) {
           requisitions.push({
             url: requestUrl,
             initiator: request.initiator(),
           });
 
-          // Verificação de VTEX IO
           if (
             requestUrl.includes("vtex_module.js") ||
             requestUrl.includes("vtexassets")
           ) {
             deploymentStatus.vtexIO = true;
           }
-          // Verificação de GTM
+
           if (requisitions[0].initiator.type === "script") {
             deploymentStatus.gtm = true;
           }
-          // Verificação de Script
+
           if (requisitions[0].initiator.type === "parser") {
             deploymentStatus.script = true;
           }
@@ -62,7 +59,6 @@ module.exports = async (req, res) => {
     console.log("Indo para a URL", url);
     await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
 
-    // Capturar permalink se disponível
     const permalink = await page.evaluate(() => {
       return window.SizebayPrescript
         ? window.SizebayPrescript().getPermalink()
