@@ -17,13 +17,21 @@ Para executar este projeto localmente, siga os passos abaixo:
 1. **Clone o repositório:**
    ```
    git clone https://github.com/AllanMicuanski/Simple-Request.git
+   ```
+   
+   ```
    cd seu_repositorio
+   ```
 
 Instale as dependências:
+   ```
 npm install
+   ```
 
 Inicie o servidor:
+   ```
 node server.js
+   ```
 
 Acesse a aplicação: Abra seu navegador e vá para http://localhost:3000.
 
