@@ -1,0 +1,53 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Diretório de ambiente
+.env
+
+# Dependências do node
+node_modules/
+.pnpm/
+.package-lock.json
+.pnpm-debug.log
+
+# Output do build
+dist/
+build/
+
+# Cache do npm
+npm-cache/
+npm-shrinkwrap.json
+
+# Cache do Yarn
+yarn.lock
+.yarn/
+
+# Configurações de IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Puppeteer cache e downloads
+puppeteer/.local-chromium/
+puppeteer/.cache/
+
+# PM2 logs
+pids/
+*.pid
+*.seed
+pm2.log
+
+# Outros arquivos temporários
+*.bak
+*.tmp
+*.temp
